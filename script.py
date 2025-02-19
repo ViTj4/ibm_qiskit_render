@@ -1,38 +1,50 @@
 import os
-from qiskit import QuantumCircuit, transpile
-from qiskit.providers.aer import AerSimulator
-from qiskit.execute_function import execute
-from qiskit_ibm_provider import IBMProvider
+from qiskit import QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import EstimatorV2 as Estimator, QiskitRuntimeService
 
-# Récupérer la clé API depuis GitHub Secrets
+# 🔹 Récupérer la clé API depuis GitHub Secrets
 api_key = os.getenv("IBM_QISKIT_API_KEY")
 
 if not api_key:
     raise ValueError("La clé API IBM Quantum n'est pas définie ! Vérifiez votre secret GitHub.")
 
-# Enregistrer et charger l'API Key IBM
-IBMProvider.save_account(api_key, overwrite=True)
-provider = IBMProvider()
+# 🔹 Authentification avec IBM Quantum
+service = QiskitRuntimeService()
+backend = service.least_busy(simulator=False, operational=True)
 
-# Choisir un backend (simulateur cloud IBM ou vrai ordinateur quantique)
-backend = provider.get_backend("ibmq_qasm_simulator")  # Simulateur IBM
+# 🔹 Création du circuit quantique
+qc = QuantumCircuit(2)
+qc.h(0)  # Hadamard sur le qubit 0
+qc.cx(0, 1)  # CNOT entre qubit 0 et 1
 
-# Créer un circuit quantique simple (Hello World)
-circuit = QuantumCircuit(2, 2)
-circuit.h(0)  # Superposition
-circuit.cx(0, 1)  # Intrication
-circuit.measure([0, 1], [0, 1])  # Mesure
+# 🔹 Dessiner le circuit (pas nécessaire en mode pipeline, mais utile en local)
+qc.draw("mpl")
 
-print("\nCircuit quantique créé :")
-print(circuit)
+# 🔹 Définition des observables
+observables_labels = ["IZ", "IX", "ZI", "XI", "ZZ", "XX"]
+observables = [SparsePauliOp(label) for label in observables_labels]
 
-# Compiler et exécuter sur IBM Quantum
-compiled_circuit = transpile(circuit, backend)
-job = execute(compiled_circuit, backend, shots=1024)
+# 🔹 Convertir en circuit ISA optimisé pour le backend IBM
+pm = generate_preset_pass_manager(backend=backend, optimization_level=1)
+isa_circuit = pm.run(qc)
 
-# Attendre et récupérer les résultats
-result = job.result()
-counts = result.get_counts()
+# 🔹 Dessiner le circuit optimisé (optionnel)
+isa_circuit.draw("mpl", idle_wires=False)
 
-print("\nRésultats de l'exécution sur IBM Quantum :")
-print(counts)
+# 🔹 Construire l'EstimatorV2 et exécuter
+estimator = Estimator(mode=backend)
+estimator.options.resilience_level = 1
+estimator.options.default_shots = 5000
+
+# 🔹 Mapper les observables avec le circuit
+mapped_observables = [
+    observable.apply_layout(isa_circuit.layout) for observable in observables
+]
+
+# 🔹 Exécuter la tâche sur IBM Quantum
+job = estimator.run([(isa_circuit, mapped_observables)])
+
+# 🔹 Afficher l'ID du job pour suivre son état sur IBM Quantum
+print(f">>> Job ID: {job.job_id()}")
