@@ -11,7 +11,7 @@ if not api_key:
     raise ValueError("La clé API IBM Quantum n'est pas définie ! Vérifiez votre secret GitHub.")
 
 # 🔹 Authentification avec IBM Quantum
-service = QiskitRuntimeService()
+service = QiskitRuntimeService(channel="ibm_quantum", token=api_key)
 backend = service.least_busy(simulator=False, operational=True)
 
 # 🔹 Création du circuit quantique
