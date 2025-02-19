@@ -19,9 +19,6 @@ qc = QuantumCircuit(2)
 qc.h(0)  # Hadamard sur le qubit 0
 qc.cx(0, 1)  # CNOT entre qubit 0 et 1
 
-# 🔹 Dessiner le circuit (pas nécessaire en mode pipeline, mais utile en local)
-qc.draw("mpl")
-
 # 🔹 Définition des observables
 observables_labels = ["IZ", "IX", "ZI", "XI", "ZZ", "XX"]
 observables = [SparsePauliOp(label) for label in observables_labels]
