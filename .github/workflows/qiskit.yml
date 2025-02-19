@@ -16,7 +16,7 @@ jobs:
           python-version: "3.9"
 
       - name: Install dependencies
-        run: pip install qiskit qiskit-ibm-provider python-dotenv
+        run: pip install qiskit qiskit-aer qiskit-ibm-provider python-dotenv
 
       - name: Run Qiskit Hello World
         env:
