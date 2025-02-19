@@ -15,7 +15,10 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Install dependencies
+      - name: Install system dependencies for Qiskit Aer
+        run: sudo apt-get update && sudo apt-get install -y libomp-dev
+
+      - name: Install Python dependencies
         run: pip install qiskit qiskit-aer qiskit-ibm-provider python-dotenv
 
       - name: Run Qiskit Hello World
