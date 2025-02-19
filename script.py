@@ -21,7 +21,8 @@ observables = [SparsePauliOp(label) for label in observables_labels]
 pass_manager = generate_preset_pass_manager(backend=backend, optimization_level=1)
 optimized_circuit = pass_manager.run(circuit)
 
-optimized_circuit.draw("mpl", idle_wires=False)
+#disable graphic print to fix pipeline : useless in pipeline
+#optimized_circuit.draw("mpl", idle_wires=False)
 
 estimator = Estimator(mode=backend)
 estimator.options.resilience_level = 1
